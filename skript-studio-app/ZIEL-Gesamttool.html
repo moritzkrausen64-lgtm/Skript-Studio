@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zielbild — Gesamt-Tool (Skript-Studio × VideoCut)</title>
+<style>
+  :root{ --bg:#0a0b0d; --panel:#131519; --panel2:#1a1d23; --line:#262a32; --ink:#f2f4f3; --muted:#8a9099; --volt:#ccff00; --signal:#ff5a3c; }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,sans-serif;
+    background-image:radial-gradient(circle at 85% -10%, rgba(204,255,0,0.07), transparent 45%); padding:40px 24px 80px; }
+  .wrap{ max-width:1180px; margin:0 auto; }
+  h1{ font-size:30px; letter-spacing:.5px; margin:0 0 4px; }
+  .sub{ color:var(--muted); font-family:'Consolas',monospace; font-size:13px; margin-bottom:30px; }
+  h2{ font-size:18px; margin:40px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+  h2 .n{ color:var(--volt); font-family:'Consolas',monospace; margin-right:8px; }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px; }
+  .mermaid{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; overflow-x:auto; }
+  .grid3{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
+  .brain{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .brain h3{ margin:0 0 8px; font-size:15px; color:var(--volt); }
+  .brain p{ margin:0; font-size:13px; color:var(--muted); line-height:1.5; }
+  .flowcol{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .flowcard{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .flowcard.b{ border-color:rgba(204,255,0,0.35); }
+  .flowcard h3{ margin:0 0 10px; font-size:15px; }
+  .flowcard ol{ margin:0; padding-left:18px; font-size:13px; line-height:1.7; color:var(--ink); }
+  .flowcard .why{ margin-top:10px; font-size:12px; color:var(--muted); }
+  .legend{ font-size:12px; color:var(--muted); margin-top:10px; }
+  .tag{ display:inline-block; font-family:'Consolas',monospace; font-size:11px; padding:2px 8px; border-radius:8px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); margin:2px; }
+  .loop{ background:rgba(204,255,0,0.07); border:1px solid rgba(204,255,0,0.25); border-radius:12px; padding:18px; font-size:14px; line-height:1.6; }
+  code{ background:var(--panel2); padding:2px 6px; border-radius:5px; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Zielbild: Das fusionierte Gesamt-Tool</h1>
+  <div class="sub">Skript-Studio × VideoCut · eine Oberfläche, ein durchgängiger Workflow · 2026-06-06</div>
+
+  <h2><span class="n">◆</span>Mindmap — alle Funktionen unter einem Dach</h2>
+  <pre class="mermaid">
+mindmap
+  root((Gesamt-Tool))
+    ① Recherche und Skript
+      Recherche-Ordner einlesen
+      Markenstimmen-Bibliothek
+      Generator datengetrieben
+      Skript overlay visuell sound
+      Optimierung und Faktencheck
+    ② Aufnahme
+      Higgsfield-Avatar
+      Selbst aufnehmen
+      Freier Video-Upload
+    ③ Transkript und Schnitt
+      ElevenLabs Scribe
+      Versprecher und Pausen-Cut
+    ④ Overlay-Engine geteilt
+      Callouts und Subtitles
+      Beats bearbeiten und patchen
+      Frame-Vorschau
+      Style-Guide Motion-CI
+    ⑤ Vorschau und Render
+      Hyperframes Studio
+      final.mp4 und 4K
+    ⑥ Archiv und Performance
+      Tags und Suche
+      View-Metriken und Score
+      Lernschleife
+  </pre>
+
+  <h2><span class="n">◆</span>End-to-End-Pipeline — beide Wege laufen zusammen</h2>
+  <pre class="mermaid">
+flowchart TB
+  R["Recherche / Thema"] --> GEN["① Skript-Generator<br/>Hooks + Beats<br/>overlay · visuell · sound"]
+  GEN --> A1["② Higgsfield-Avatar"]
+  GEN --> A2["② Selbst aufnehmen"]
+  UP["② Freier Video-Upload"]
+  A1 --> VID["Video"]
+  A2 --> VID
+  UP --> VID
+  VID --> TR["③ Transkription<br/>ElevenLabs Scribe"]
+  TR --> CUT["③ Schnitt<br/>Versprecher / Pausen"]
+  CUT --> OE{"④ Overlay-Engine<br/>geteilt"}
+  GEN -. "Overlays vorab → matchen (Weg A)" .-> OE
+  OE --> HF["④ Hyperframes-Composition<br/>Callouts · Subtitles"]
+  HF --> ED["④ Beats prüfen / patchen"]
+  ED --> RND["⑤ Render<br/>final.mp4 / 4K"]
+  RND --> ARC["⑥ Archiv + Metriken<br/>Virality-Score"]
+  ARC -. "Top-Hooks" .-> GEN
+  ARC -. "Top-Overlays / Style-CI" .-> OE
+
+  classDef gen fill:#1a1d23,stroke:#ccff00,color:#f2f4f3;
+  classDef eng fill:#1a1d23,stroke:#ccff00,color:#f2f4f3;
+  classDef norm fill:#131519,stroke:#262a32,color:#f2f4f3;
+  classDef arc fill:#15180f,stroke:#ccff00,color:#f2f4f3;
+  class GEN gen; class OE eng; class ARC arc;
+  class R,A1,A2,UP,VID,TR,CUT,HF,ED,RND norm;
+  </pre>
+  <div class="legend">Durchgezogen = Hauptfluss · gepunktet = Wissens-/Match-Verbindungen (die Kopplung). Der einzige Unterschied der zwei Wege: Weg A kennt die Overlays vorab und <b>matcht</b> sie ans Transkript, Weg B <b>erfindet</b> sie aus dem Transkript — gleicher Engine.</div>
+
+  <h2><span class="n">◆</span>Die zwei Wege</h2>
+  <div class="flowcol">
+    <div class="flowcard">
+      <h3>Weg A — Skript-first (geplant)</h3>
+      <ol>
+        <li>Recherche/Thema → <b>Generator</b> erzeugt Skript <i>mit</i> overlay/visuell/sound</li>
+        <li>Higgsfield-Avatar <i>oder</i> selbst aufnehmen → Video</li>
+        <li>Transkription → Overlays werden <b>gematcht</b> (Timestamps drauf)</li>
+        <li>Hyperframes → Beats patchen → Render → Archiv</li>
+      </ol>
+      <div class="why">Vorteil: Overlays sind schon durchdacht — keine Doppelarbeit, höchste Konsistenz.</div>
+    </div>
+    <div class="flowcard b">
+      <h3>Weg B — Video-first (VideoCut heute)</h3>
+      <ol>
+        <li>Video-Upload</li>
+        <li>Transkription → Schnitt (Versprecher/Pausen)</li>
+        <li><b>Overlay-Engine</b> erfindet Overlays aus dem Transkript (read-only!)</li>
+        <li>Hyperframes → Beats patchen → Render → Archiv</li>
+      </ol>
+      <div class="why">Bleibt vollständig erhalten. Das Transkript wird nie verändert — Overlays kommen additiv obendrauf.</div>
+    </div>
+  </div>
+
+  <h2><span class="n">◆</span>Die drei geteilten „Gehirne" (zentral &amp; trainierbar)</h2>
+  <div class="grid3">
+    <div class="brain"><h3>1 · Skript-/Hook-Gehirn</h3><p>Datengetriebener Generator (lernt aus echten Views) + Recherche-Ordner, Markenstimme, Optimierung/Faktencheck.</p></div>
+    <div class="brain"><h3>2 · Overlay-Gehirn</h3><p>Geteilter Layer <code>Text [+Timing] → overlay/visuell/sound</code>. Gespeist von Motion-CI &amp; Brand-Guidelines.</p></div>
+    <div class="brain"><h3>3 · Analyse-Taxonomie</h3><p>Hook/Body/CTA/Archetyp/Framework als gemeinsames Vokabular — verbindet Generator, Overlay-Engine und Archiv.</p></div>
+  </div>
+
+  <h2><span class="n">◆</span>Die Lernschleife (das, was du anlernst)</h2>
+  <div class="loop">
+    <b>Archiv (gerenderte Videos) + reale Metriken → Virality-Score</b><br/>
+    → Top-<b>Hooks</b> verbessern das Skript-/Hook-Gehirn (Swipe-File)<br/>
+    → Top-<b>Overlays/Callouts</b> verbessern das Overlay-Gehirn (Beispiel-Bibliothek + Style-Guide)<br/>
+    <span class="legend">→ Beide Wege werden mit jedem veröffentlichten Video besser — an genau einer Stelle gepflegt.</span>
+  </div>
+
+  <h2><span class="n">◆</span>Überschneidung = bewusst zusammengeführt</h2>
+  <div class="panel">
+    <p style="margin:0 0 8px;font-size:14px;">Beide Tools überschneiden sich an exakt drei Stellen — und es ist jeweils <b>dieselbe</b> Sache. Diese drei werden im Merge vereint statt doppelt gepflegt:</p>
+    <span class="tag">Skript-Generator</span>
+    <span class="tag">Analyse-Taxonomie Hook/Body/CTA</span>
+    <span class="tag">Overlay-Erzeugung + Beat-Editing</span>
+    <p style="margin:12px 0 0;font-size:12px;color:var(--muted);"><code>analyze.js</code> in VideoCut sagt es selbst: „Taxonomie 1:1 aus Skript-Studio". Die Fundamente passen also bereits zusammen.</p>
+  </div>
+
+  <div class="legend" style="margin-top:30px;">Schriftliche Vollversion: <code>ZIEL-Gesamttool.md</code> · Architektur-Details: <code>ARCHITEKTUR.md</code></div>
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#131519', primaryColor: '#1a1d23', primaryTextColor: '#f2f4f3',
+      primaryBorderColor: '#ccff00', lineColor: '#8a9099', secondaryColor: '#131519',
+      tertiaryColor: '#131519', fontSize: '15px',
+    },
+    mindmap: { padding: 14 },
+    flowchart: { curve: 'basis', htmlLabels: true },
+  });
+</script>
+</body>
+</html>
