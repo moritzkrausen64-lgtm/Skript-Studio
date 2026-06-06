@@ -6,8 +6,12 @@ import { VIDEO_TYPEN, HOOK_EBENEN, HOOK_ARCHETYPEN, FRAMEWORKS, LAENGEN, TON, CT
 import { Field, Select } from "./ui.jsx";
 import { ScriptOutput } from "./ScriptOutput.jsx";
 
-export function Generator({ topics, setTopics, brandVoice, usedHooks, setUsedHooks, onSaveProject, projectToLoad, onProjectLoaded }) {
+export function Generator({ topics, setTopics, brandVoices = [], activeBrandVoiceId, usedHooks, setUsedHooks, onSaveProject, projectToLoad, onProjectLoaded }) {
   const [sel, setSel] = useState("");
+  const [selBV, setSelBV] = useState(activeBrandVoiceId || "");
+  // Default folgt der aktiven Markenstimme, bleibt aber pro Skript umschaltbar
+  useEffect(() => { setSelBV(activeBrandVoiceId || ""); }, [activeBrandVoiceId]);
+  const brandVoiceText = brandVoices.find((b) => b.id === selBV)?.text || "";
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [newText, setNewText] = useState("");
@@ -41,6 +45,7 @@ export function Generator({ topics, setTopics, brandVoice, usedHooks, setUsedHoo
       id: Date.now(),
       savedAt: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       topicName: topic?.name || "Unbekanntes Thema",
+      brandVoiceName: brandVoices.find((b) => b.id === selBV)?.name || null,
       sel,
       cfg: { ...cfg },
       out: { ...out },
@@ -119,6 +124,11 @@ export function Generator({ topics, setTopics, brandVoice, usedHooks, setUsedHoo
     });
     setTopics(merged);
     await store.set("vsg:topics", merged);
+    // Geladenes Dokument automatisch als Thema wählen (Schritt "Thema wählen" entfällt)
+    if (docs.length) {
+      const first = merged.find((t) => t.name === docs[0].name);
+      if (first) setSel(String(first.id));
+    }
     setFolderInfo(
       docs.length
         ? `${docs.length} Dokument(e) eingelesen.` + (skipped.length ? ` (${skipped.length} ignoriert)` : "")
@@ -144,6 +154,11 @@ export function Generator({ topics, setTopics, brandVoice, usedHooks, setUsedHoo
         if (pos >= 0) merged[pos] = entry; else merged.push(entry);
       });
       setTopics(merged); await store.set("vsg:topics", merged);
+      // Geladenes Dokument automatisch als Thema wählen (Schritt "Thema wählen" entfällt)
+      if (docs.length) {
+        const first = merged.find((t) => t.name === docs[0].name);
+        if (first) setSel(String(first.id));
+      }
       setFolderInfo(
         docs.length
           ? `${docs.length} Dokument(e) eingelesen.` + (data.skipped?.length ? ` (${data.skipped.length} ignoriert)` : "")
@@ -154,15 +169,16 @@ export function Generator({ topics, setTopics, brandVoice, usedHooks, setUsedHoo
   }
 
   async function generate() {
-    const topic = topics.find((t) => String(t.id) === sel);
-    if (!topic) { setErr("Bitte zuerst ein Thema wählen oder anlegen."); return; }
+    // Fallback: kein Thema gewählt, aber genau eines vorhanden → dieses nutzen
+    const topic = topics.find((t) => String(t.id) === sel) || (topics.length === 1 ? topics[0] : null);
+    if (!topic) { setErr("Bitte einen Recherche-Ordner einlesen oder ein Thema wählen."); return; }
     setBusy(true); setErr(""); setOut(null);
     const prompt = `Du bist Experte für virales Short-Form-Video (TikTok/Reels) in der Nische Sport & Gesundheit (Laufen, Krafttraining, Supplemente, Hybridathletik). Der Creator ist Physiotherapeut und Sportler. Sprache: ausschließlich Deutsch, Du-Form.
 
 RECHERCHE-GRUNDLAGE (Thema "${topic.name}"):
 ${topic.text}
 
-${brandVoice ? `MARKENSTIMME (schreibe genau in diesem Stil/Ton):\n${brandVoice}\n` : ""}
+${brandVoiceText ? `MARKENSTIMME (schreibe genau in diesem Stil/Ton):\n${brandVoiceText}\n` : ""}
 ${usedHooks.length ? `BEREITS GENUTZTE HOOK-MUSTER (bewusst vermeiden, neu variieren):\n${usedHooks.slice(-12).join(" | ")}\n` : ""}
 
 PARAMETER:
@@ -222,7 +238,7 @@ Antworte AUSSCHLIESSLICH mit reinem JSON (keine Markdown-Fences, kein Text drumh
     const beat = out.body[index];
     const prompt = `Du überarbeitest EINEN Beat eines bestehenden Short-Form-Skripts (Nische Sport & Gesundheit, Deutsch, Du-Form). Der Creator ist Physiotherapeut und Sportler. Halte Kohärenz und roten Faden zum restlichen Skript.
 
-${brandVoice ? `MARKENSTIMME (in diesem Stil bleiben):\n${brandVoice}\n` : ""}${topic ? `RECHERCHE-GRUNDLAGE:\n${topic.text.slice(0, 4000)}\n` : ""}
+${brandVoiceText ? `MARKENSTIMME (in diesem Stil bleiben):\n${brandVoiceText}\n` : ""}${topic ? `RECHERCHE-GRUNDLAGE:\n${topic.text.slice(0, 4000)}\n` : ""}
 GESAMTES AKTUELLES SKRIPT (Beats als Kontext):
 ${JSON.stringify(out.body)}
 
@@ -274,7 +290,7 @@ ${hookRule}
 ${groundBlock}
 RAHMEN UNBEDINGT BEIBEHALTEN: Detailtiefe ${cfg.detail} (${DETAIL_HINT[cfg.detail]}), Bildsprache ${cfg.bild} (${BILD_RULE[cfg.bild]}), Claim-Intensität ${cfg.claim}, Framework ${cfg.framework}, Länge ${cfg.laenge}.
 
-${brandVoice ? `MARKENSTIMME (Ton beibehalten):\n${brandVoice}\n` : ""}${topic ? `RECHERCHE-GRUNDLAGE (Faktencheck strikt dagegen):\n${topic.text.slice(0, 5000)}\n` : ""}
+${brandVoiceText ? `MARKENSTIMME (Ton beibehalten):\n${brandVoiceText}\n` : ""}${topic ? `RECHERCHE-GRUNDLAGE (Faktencheck strikt dagegen):\n${topic.text.slice(0, 5000)}\n` : ""}
 AKTUELLES SKRIPT:
 ${JSON.stringify({ hooks: out.hooks, body: out.body, cta: out.cta, cover: out.cover, caption: out.caption, hashtags: out.hashtags })}
 
@@ -332,6 +348,15 @@ Gib das VERBESSERTE Skript zurück, AUSSCHLIESSLICH als reines JSON (keine Fence
             <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 8, fontFamily: "Space Mono" }}>Alternativ oben einen Ordner einlesen – jede Datei wird ein Thema.</p>
           </div>
         )}
+
+        <Field label="Markenstimme">
+          <select value={selBV} onChange={(e) => setSelBV(e.target.value)} className="vs-input">
+            <option value="">— keine —</option>
+            {brandVoices.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}{b.id === activeBrandVoiceId ? " (aktiv)" : ""}</option>
+            ))}
+          </select>
+        </Field>
 
         <Field label="Plattform"><Select value={cfg.plattform} onChange={(v) => set("plattform", v)} options={PLATTFORM} /></Field>
         <Field label="Video-Typ"><Select value={cfg.typ} onChange={(v) => set("typ", v)} options={VIDEO_TYPEN} /></Field>

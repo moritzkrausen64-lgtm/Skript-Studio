@@ -19,7 +19,7 @@ export function Projekte({ savedProjects, onLoad, onDelete }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "Anton", fontSize: 17, letterSpacing: ".03em", marginBottom: 4 }}>{p.topicName}</div>
               <div style={{ fontFamily: "Space Mono", fontSize: 11, color: "var(--muted)", marginBottom: 10 }}>
-                {p.savedAt} · {p.cfg?.plattform} · {p.cfg?.typ} · {p.cfg?.laenge}
+                {p.savedAt} · {p.cfg?.plattform} · {p.cfg?.typ} · {p.cfg?.laenge}{p.brandVoiceName ? ` · 🎙 ${p.brandVoiceName}` : ""}
               </div>
               {p.out?.hooks?.[0] && (
                 <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.45 }}>

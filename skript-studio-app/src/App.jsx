@@ -9,7 +9,8 @@ import { Projekte } from "./components/Projekte.jsx";
 export default function App() {
   const [tab, setTab] = useState("gen");
   const [topics, setTopics] = useState([]);
-  const [brandVoice, setBrandVoice] = useState("");
+  const [brandVoices, setBrandVoices] = useState([]);
+  const [activeBrandVoiceId, setActiveBrandVoiceId] = useState(null);
   const [usedHooks, setUsedHooks] = useState([]);
   const [savedProjects, setSavedProjects] = useState([]);
   const [projectToLoad, setProjectToLoad] = useState(null);
@@ -17,11 +18,50 @@ export default function App() {
   useEffect(() => {
     (async () => {
       setTopics((await store.get("vsg:topics")) || []);
-      setBrandVoice((await store.get("vsg:brandvoice")) || "");
       setUsedHooks((await store.get("vsg:usedhooks")) || []);
       setSavedProjects((await store.get("vsg:projects")) || []);
+
+      // Markenstimmen laden (+ Migration der alten Einzel-Markenstimme)
+      let bvs = (await store.get("vsg:brandvoices")) || [];
+      let active = await store.get("vsg:activeBrandVoice");
+      if (bvs.length === 0) {
+        const old = await store.get("vsg:brandvoice");
+        if (old && old.trim()) {
+          const now = Date.now();
+          const entry = { id: now, name: "Meine Markenstimme", text: old, tags: [], profile: "", createdAt: now, updatedAt: now };
+          bvs = [entry]; active = now;
+          await store.set("vsg:brandvoices", bvs);
+          await store.set("vsg:activeBrandVoice", active);
+        }
+      }
+      setBrandVoices(bvs);
+      setActiveBrandVoiceId(active || bvs[0]?.id || null);
     })();
   }, []);
+
+  async function saveBrandVoice(entry) {
+    const exists = brandVoices.some((b) => b.id === entry.id);
+    const next = exists ? brandVoices.map((b) => (b.id === entry.id ? entry : b)) : [entry, ...brandVoices];
+    setBrandVoices(next);
+    await store.set("vsg:brandvoices", next);
+    if (!activeBrandVoiceId) { setActiveBrandVoiceId(entry.id); await store.set("vsg:activeBrandVoice", entry.id); }
+  }
+
+  async function deleteBrandVoice(id) {
+    const next = brandVoices.filter((b) => b.id !== id);
+    setBrandVoices(next);
+    await store.set("vsg:brandvoices", next);
+    if (activeBrandVoiceId === id) {
+      const na = next[0]?.id || null;
+      setActiveBrandVoiceId(na);
+      await store.set("vsg:activeBrandVoice", na);
+    }
+  }
+
+  async function setActiveBrandVoice(id) {
+    setActiveBrandVoiceId(id);
+    await store.set("vsg:activeBrandVoice", id);
+  }
 
   async function saveProject(projectData) {
     const next = [projectData, ...savedProjects];
@@ -61,10 +101,10 @@ export default function App() {
 
         {/* Alle Tabs bleiben gemountet – nur per CSS ein-/ausgeblendet, so bleibt der State erhalten */}
         <div style={{ display: tab === "gen" ? "" : "none" }}>
-          <Generator topics={topics} setTopics={setTopics} brandVoice={brandVoice} usedHooks={usedHooks} setUsedHooks={setUsedHooks} onSaveProject={saveProject} projectToLoad={projectToLoad} onProjectLoaded={() => setProjectToLoad(null)} />
+          <Generator topics={topics} setTopics={setTopics} brandVoices={brandVoices} activeBrandVoiceId={activeBrandVoiceId} usedHooks={usedHooks} setUsedHooks={setUsedHooks} onSaveProject={saveProject} projectToLoad={projectToLoad} onProjectLoaded={() => setProjectToLoad(null)} />
         </div>
         <div style={{ display: tab === "voice" ? "" : "none" }}>
-          <BrandVoice brandVoice={brandVoice} setBrandVoice={setBrandVoice} />
+          <BrandVoice brandVoices={brandVoices} onSave={saveBrandVoice} onDelete={deleteBrandVoice} activeBrandVoiceId={activeBrandVoiceId} onSetActive={setActiveBrandVoice} />
         </div>
         <div style={{ display: tab === "projekte" ? "" : "none" }}>
           <Projekte savedProjects={savedProjects} onLoad={loadProject} onDelete={deleteProject} />
