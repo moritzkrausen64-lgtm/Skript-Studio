@@ -115,8 +115,12 @@ Archiv (gerenderte Videos) + reale Metriken → Virality-Score
    dass sie sowohl aus dem Transkript (Weg B) als auch aus den Skript-Overlays (Weg A, Match) gespeist wird.
 3. **Match-Funktion** Skript-Overlays ↔ Transkript-Timestamps (neu, für Weg A).
 4. **Higgsfield-Anbindung** (A1) — Skript → Avatar-Video (neue Integration).
-5. **UI-Vereinheitlichung:** Generator-Tab in VideoCuts Shell integrieren
-   (React-Mount oder Nachbau — beim Merge entscheiden).
+5. **UI-Vereinheitlichung (entschieden 2026-06-06): Vanilla-JS erweitern.**
+   VideoCut **hat den Generator-Tab schon** (`app.js`) — Skript-Studios einzigartige
+   Features (Recherche-Ordner, Markenstimme, Per-Feld-Editing, Optimierung/Faktencheck)
+   werden in den bestehenden Vanilla-Tab ergänzt. **Kein React-Mount** (würde den
+   durchgängigen Flow + die Overlay-/Lernschleifen-Kopplung an einer Framework-Grenze
+   zerschneiden und ein zweites Persistenz-Modell mitschleppen). Skript-Studio bleibt Referenz/Spec.
 6. **Style-/Beispiel-Bibliothek** des Overlay-Gehirns an die Lernschleife koppeln.
 
 ---

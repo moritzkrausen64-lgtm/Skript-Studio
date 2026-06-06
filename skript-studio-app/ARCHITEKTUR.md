@@ -98,9 +98,20 @@ welcher Sound). Jedes Feld ist im UI einzeln editier- und neu-generierbar.
   (Schema mit `hooks/body/cta/cover/caption/hashtags/rating`). Skript-Studios
   `out`-Schema ist nah dran → Feld-Mapping nötig (z.B. `gesamt`→`overall`,
   `ebene`→`archetype`-Kontext). **Dieses Mapping ist die Hauptarbeit.**
-- UI: VideoCut nutzt Vanilla-JS (`ui/public/app.js`), Skript-Studio React.
-  Beim Port wird der Generator-Tab in VideoCuts Shell nachgebaut **oder** VideoCut
-  bekommt einen eingebetteten React-Mount nur für den Generator. (Offen — bei der Fusion entscheiden.)
+- **UI-Entscheidung (2026-06-06, getroffen): Vanilla-JS erweitern, kein React-Mount.**
+  VideoCut **hat den Generator-Tab bereits** (`ui/public/app.js`: `generateScript`,
+  `renderScript`, `renderStructure`, `loadGenInsights`) — voll funktionsfähig und in
+  die App integriert (geteilter `state`, `switchTab`, Cross-Tab-Sprünge). Der Merge
+  portiert also **nicht** React hinein, sondern ergänzt Skript-Studios *einzigartige
+  Features* (Recherche-Ordner, Markenstimme, Per-Feld-Editing, Optimierung/Faktencheck)
+  in den bestehenden Vanilla-Tab. Gründe: (1) der durchgängige Workflow + die
+  Overlay-/Lernschleifen-Kopplung brauchen den Generator im **selben State-World**; ein
+  React-Island wäre eine Wand im Flow. (2) Zwei Persistenz-Modelle (`/api/store` vs.
+  `scripts/*.json`) würden sonst doppelt gepflegt. (3) VideoCut ist bewusst **build-frei**
+  (statisch + Express); React erzwingt dauerhaft Vite/Bundling. (4) Skript-Studios Wert
+  sind Prompts/Schema/Features — die portieren als Logik, nicht als Komponenten; VideoCut
+  beherrscht komplexe Vanilla-UI bereits (Beat-Cards, Patch-Modal, Bibliotheks-Details).
+  Skript-Studio bleibt als **Referenz/Spec** erhalten.
 - Claude-Call: beide rufen die Anthropic-API serverseitig. VideoCut liest `CLAUDE_MODEL`
   aus `.env` (Default `claude-sonnet-4-6`). Skript-Studio sollte denselben Mechanismus übernehmen.
 
