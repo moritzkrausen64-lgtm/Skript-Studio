@@ -13,13 +13,22 @@ export default function App() {
   const [activeBrandVoiceId, setActiveBrandVoiceId] = useState(null);
   const [usedHooks, setUsedHooks] = useState([]);
   const [savedProjects, setSavedProjects] = useState([]);
+  const [projectFolders, setProjectFolders] = useState(["Unsortiert"]);
   const [projectToLoad, setProjectToLoad] = useState(null);
 
   useEffect(() => {
     (async () => {
       setTopics((await store.get("vsg:topics")) || []);
       setUsedHooks((await store.get("vsg:usedhooks")) || []);
-      setSavedProjects((await store.get("vsg:projects")) || []);
+      const projs = (await store.get("vsg:projects")) || [];
+      setSavedProjects(projs);
+
+      // Ordner laden (+ Ordner aus bestehenden Projekten ergänzen, "Unsortiert" immer dabei)
+      let folders = (await store.get("vsg:projectfolders")) || [];
+      const fromProjects = projs.map((p) => p.folder).filter(Boolean);
+      folders = Array.from(new Set(["Unsortiert", ...folders, ...fromProjects]));
+      setProjectFolders(folders);
+      await store.set("vsg:projectfolders", folders);
 
       // Markenstimmen laden (+ Migration der alten Einzel-Markenstimme)
       let bvs = (await store.get("vsg:brandvoices")) || [];
@@ -80,6 +89,20 @@ export default function App() {
     setTab("gen");
   }
 
+  async function createProjectFolder(name) {
+    const n = String(name || "").trim();
+    if (!n || projectFolders.includes(n)) return;
+    const next = [...projectFolders, n];
+    setProjectFolders(next);
+    await store.set("vsg:projectfolders", next);
+  }
+
+  async function setProjectFolder(id, folder) {
+    const next = savedProjects.map((p) => (p.id === id ? { ...p, folder } : p));
+    setSavedProjects(next);
+    await store.set("vsg:projects", next);
+  }
+
   return (
     <div className="vs-root">
       <GlobalStyles />
@@ -101,13 +124,13 @@ export default function App() {
 
         {/* Alle Tabs bleiben gemountet – nur per CSS ein-/ausgeblendet, so bleibt der State erhalten */}
         <div style={{ display: tab === "gen" ? "" : "none" }}>
-          <Generator topics={topics} setTopics={setTopics} brandVoices={brandVoices} activeBrandVoiceId={activeBrandVoiceId} usedHooks={usedHooks} setUsedHooks={setUsedHooks} onSaveProject={saveProject} projectToLoad={projectToLoad} onProjectLoaded={() => setProjectToLoad(null)} />
+          <Generator topics={topics} setTopics={setTopics} brandVoices={brandVoices} activeBrandVoiceId={activeBrandVoiceId} usedHooks={usedHooks} setUsedHooks={setUsedHooks} projectFolders={projectFolders} onCreateFolder={createProjectFolder} onSaveProject={saveProject} projectToLoad={projectToLoad} onProjectLoaded={() => setProjectToLoad(null)} />
         </div>
         <div style={{ display: tab === "voice" ? "" : "none" }}>
           <BrandVoice brandVoices={brandVoices} onSave={saveBrandVoice} onDelete={deleteBrandVoice} activeBrandVoiceId={activeBrandVoiceId} onSetActive={setActiveBrandVoice} />
         </div>
         <div style={{ display: tab === "projekte" ? "" : "none" }}>
-          <Projekte savedProjects={savedProjects} onLoad={loadProject} onDelete={deleteProject} />
+          <Projekte savedProjects={savedProjects} folders={projectFolders} onLoad={loadProject} onDelete={deleteProject} onSetFolder={setProjectFolder} onCreateFolder={createProjectFolder} />
         </div>
       </div>
     </div>

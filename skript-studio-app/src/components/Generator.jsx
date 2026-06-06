@@ -5,9 +5,22 @@ import { callClaude } from "../lib/claude.js";
 import { VIDEO_TYPEN, HOOK_EBENEN, HOOK_ARCHETYPEN, FRAMEWORKS, LAENGEN, TON, CTA_ZIELE, CLAIM_STUFEN, PLATTFORM, DETAIL_OPTS, BILD_OPTS, DETAIL_HINT, BILD_HINT, BILD_RULE } from "../lib/options.js";
 import { Field, Select } from "./ui.jsx";
 import { ScriptOutput } from "./ScriptOutput.jsx";
+import { SaveProjectModal } from "./SaveProjectModal.jsx";
 
-export function Generator({ topics, setTopics, brandVoices = [], activeBrandVoiceId, usedHooks, setUsedHooks, onSaveProject, projectToLoad, onProjectLoaded }) {
+// Alt-Projekte (einblendung/shot) auf das neue Feldmodell (overlay/visuell/sound) heben
+function normalizeOut(out) {
+  if (!out || !Array.isArray(out.body)) return out;
+  const body = out.body.map((b) => {
+    if (b.overlay !== undefined || b.visuell !== undefined || b.sound !== undefined) return b;
+    const { einblendung, shot, ...rest } = b;
+    return { ...rest, overlay: einblendung || "", visuell: shot || "", sound: "" };
+  });
+  return { ...out, body };
+}
+
+export function Generator({ topics, setTopics, brandVoices = [], activeBrandVoiceId, usedHooks, setUsedHooks, projectFolders = [], onCreateFolder, onSaveProject, projectToLoad, onProjectLoaded }) {
   const [sel, setSel] = useState("");
+  const [saveOpen, setSaveOpen] = useState(false);
   const [selBV, setSelBV] = useState(activeBrandVoiceId || "");
   // Default folgt der aktiven Markenstimme, bleibt aber pro Skript umschaltbar
   useEffect(() => { setSelBV(activeBrandVoiceId || ""); }, [activeBrandVoiceId]);
@@ -34,16 +47,20 @@ export function Generator({ topics, setTopics, brandVoices = [], activeBrandVoic
     if (!projectToLoad) return;
     setSel(projectToLoad.sel);
     setCfg(projectToLoad.cfg);
-    setOut(projectToLoad.out);
+    setOut(normalizeOut(projectToLoad.out));
     setSaved(false);
     onProjectLoaded();
   }, [projectToLoad]);
 
-  async function handleSaveProject() {
+  async function confirmSave(meta) {
     const topic = topics.find((t) => String(t.id) === sel);
     const project = {
       id: Date.now(),
       savedAt: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      name: meta.name,
+      folder: meta.folder || "Unsortiert",
+      description: meta.description || "",
+      tags: meta.tags || [],
       topicName: topic?.name || "Unbekanntes Thema",
       brandVoiceName: brandVoices.find((b) => b.id === selBV)?.name || null,
       sel,
@@ -51,6 +68,7 @@ export function Generator({ topics, setTopics, brandVoices = [], activeBrandVoic
       out: { ...out },
     };
     await onSaveProject(project);
+    setSaveOpen(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -200,7 +218,7 @@ PARAMETER:
 Antworte AUSSCHLIESSLICH mit reinem JSON (keine Markdown-Fences, kein Text drumherum) in exakt dieser Struktur:
 {
  "hooks":[{"ebene":"...","gesprochen":"erster gesprochener Satz","overlay":"eingeblendeter Text","visuell":"visuelle Umsetzung","sound":"Sound-Idee"}, ...genau 3],
- "body":[{"beat":"z.B. Problem","text":"Voiceover/Skript-Text","einblendung":"Was eingeblendet wird","shot":"Kameraeinstellung/B-Roll"}, ...3-5 Beats],
+ "body":[{"beat":"z.B. Problem","text":"Voiceover/gesprochener Skript-Text","overlay":"kurzer eingeblendeter Text","visuell":"konkrete visuelle Umsetzung (Kameraeinstellung/Aktion/B-Roll, umsetzbar für ein Motion-Graphics-Tool)","sound":"konkrete Sound-Idee"}, ...3-5 Beats],
  "cta":"konkreter CTA passend zum Ziel",
  "cover":{"frame":"welcher Moment als Cover","text":"Text aufs Cover"},
  "caption":"Caption-Text","hashtags":["...5-8 ohne #"],
@@ -249,18 +267,54 @@ STIL/FOKUS: ${focus} → ${FOCUS_HINT[focus]}
 LÄNGE: ${len} → ${LEN_HINT[len]}
 DETAILTIEFE (beibehalten): ${cfg.detail} → ${DETAIL_HINT[cfg.detail]}
 BILDSPRACHE (zwingend beachten): ${BILD_RULE[cfg.bild]}
-${hint && hint.trim() ? `ZUSÄTZLICHE ANWEISUNG DES CREATORS (hat Priorität, unbedingt umsetzen): "${hint.trim()}"\n` : ""}Claim-Intensität bleibt: ${cfg.claim}. Behalte das Label "${beat.beat}". Schreibe NUR diesen einen Beat neu, passend zwischen die Nachbar-Beats.
+${hint && hint.trim() ? `ZUSÄTZLICHE ANWEISUNG DES CREATORS (hat Priorität, unbedingt umsetzen): "${hint.trim()}"\n` : ""}Claim-Intensität bleibt: ${cfg.claim}. Schreibe NUR den gesprochenen Text dieses Beats neu, passend zwischen die Nachbar-Beats. Overlay/Visuell/Sound werden separat gepflegt — nicht ausgeben.
 
 Antworte AUSSCHLIESSLICH als reines JSON (keine Fences):
-{"beat":"${beat.beat}","text":"...","einblendung":"...","shot":"..."}`;
+{"text":"..."}`;
     try {
       const nb = await callClaude(prompt, 1200);
       setOut((prev) => {
         const body = [...prev.body];
-        body[index] = { beat: beat.beat, ...nb };
+        body[index] = { ...body[index], text: nb.text ?? body[index].text };
         return { ...prev, body };
       });
     } catch (e) { setErr("Abschnitt konnte nicht neu generiert werden: " + e.message); }
+  }
+
+  // Inline-Bearbeitung eines Feldes in Hook bzw. Beat
+  function editHook(i, field, value) {
+    setOut((p) => { const hooks = [...p.hooks]; hooks[i] = { ...hooks[i], [field]: value }; return { ...p, hooks }; });
+  }
+  function editBeat(i, field, value) {
+    setOut((p) => { const body = [...p.body]; body[i] = { ...body[i], [field]: value }; return { ...p, body }; });
+  }
+
+  // Einzelnes strukturiertes Feld (Overlay/Visuell/Sound) per Claude neu generieren
+  const SPEC_LABEL = {
+    overlay: "Overlay-Text — kurzer, knackiger eingeblendeter Text (max ~6 Wörter)",
+    visuell: "Visuelle Umsetzung — konkrete Kameraeinstellung/Aktion in 1 Satz, direkt umsetzbar für ein Motion-Graphics-Tool (Hyperframes)",
+    sound: "Sound-Idee — 1 kurze, konkrete Phrase",
+  };
+  async function regenSpecField(kind, i, field, keyword) {
+    if (!out) return;
+    const item = kind === "hook" ? out.hooks[i] : out.body[i];
+    const spoken = kind === "hook" ? item.gesprochen : item.text;
+    const prompt = `Du gestaltest die ${field === "sound" ? "akustische" : "visuelle"} Umsetzung ${kind === "hook" ? "einer Hook-Variante" : "eines Drehbuch-Beats"} eines Short-Form-Videos (Nische Sport & Gesundheit, Deutsch, Du-Form). Diese Spezifikation steuert später ein Video-Tool (Hyperframes) — sei konkret, knapp und umsetzbar.
+
+GESPROCHEN: "${spoken || ""}"
+${kind === "beat" ? `BEAT-LABEL: "${item.beat}"\n` : ""}AKTUELLES FELD "${field}": "${item[field] || ""}"
+${keyword && keyword.trim() ? `WUNSCH/KEYWORD (unbedingt umsetzen): "${keyword.trim()}"\n` : ""}
+Erzeuge NUR eine neue, bessere Version für: ${SPEC_LABEL[field]}.
+Antworte AUSSCHLIESSLICH als reines JSON (keine Fences): {"value":"..."}`;
+    try {
+      const r = await callClaude(prompt, 300);
+      const value = r.value ?? r[field] ?? "";
+      setOut((p) => {
+        const arr = kind === "hook" ? [...p.hooks] : [...p.body];
+        arr[i] = { ...arr[i], [field]: value };
+        return kind === "hook" ? { ...p, hooks: arr } : { ...p, body: arr };
+      });
+    } catch (e) { setErr("Feld konnte nicht neu generiert werden: " + e.message); }
   }
 
   async function optimizeScript(ground) {
@@ -297,7 +351,7 @@ ${JSON.stringify({ hooks: out.hooks, body: out.body, cta: out.cta, cover: out.co
 Gib das VERBESSERTE Skript zurück, AUSSCHLIESSLICH als reines JSON (keine Fences) in exakt dieser Struktur:
 {
  "hooks":[{"ebene":"...","gesprochen":"...","overlay":"...","visuell":"...","sound":"..."}, ...genau 3],
- "body":[{"beat":"...","text":"...","einblendung":"...","shot":"..."}, ...],
+ "body":[{"beat":"...","text":"...","overlay":"...","visuell":"...","sound":"..."}, ...],
  "cta":"...","cover":{"frame":"...","text":"..."},"caption":"...","hashtags":["...5-8 ohne #"],
  "rating":{"gesamt":0-100,"confidence":"niedrig|mittel|hoch","scores":{"audience_breite":0-100,"pain_intensitaet":0-100,"shareability":0-100,"saveability":0-100,"kommentar_potenzial":0-100,"hook_staerke":0-100,"suchbarkeit":0-100,"saettigung":0-100},"reframe":"nur falls gesamt<60, sonst leerer String"},
  "hook_formel":"...",
@@ -403,15 +457,31 @@ Gib das VERBESSERTE Skript zurück, AUSSCHLIESSLICH als reines JSON (keine Fence
           </div>
         )}
         {busy && <div className="vs-panel" style={{ padding: 48, textAlign: "center", color: "var(--muted)" }}><Loader2 size={32} className="animate-spin" style={{ margin: "0 auto 12px", color: "var(--volt)" }} /><p>Verdichte Recherche zu Skript…</p></div>}
-        <ScriptOutput s={out} onRegenBeat={regenerateBeat} onOptimize={optimizeScript} />
+        <ScriptOutput s={out}
+          onRegenBeat={regenerateBeat}
+          onRegenBeatField={(i, field, kw) => regenSpecField("beat", i, field, kw)}
+          onEditBeat={editBeat}
+          onRegenHookField={(i, field, kw) => regenSpecField("hook", i, field, kw)}
+          onEditHook={editHook}
+          onOptimize={optimizeScript} />
         {out && onSaveProject && (
           <div className="flex justify-end" style={{ marginTop: 12 }}>
-            <button className="vs-ghost" onClick={handleSaveProject}>
-              {saved ? <><Check size={13} /> Gespeichert!</> : <><Save size={13} /> Als Projekt speichern</>}
+            <button className="vs-ghost" onClick={() => setSaveOpen(true)}>
+              {saved ? <><Check size={13} /> Gespeichert!</> : <><Save size={13} /> Skript speichern</>}
             </button>
           </div>
         )}
       </div>
+
+      <SaveProjectModal
+        open={saveOpen}
+        out={out}
+        folders={projectFolders}
+        defaultName={topics.find((t) => String(t.id) === sel)?.name || ""}
+        onCreateFolder={onCreateFolder}
+        onConfirm={confirmSave}
+        onClose={() => setSaveOpen(false)}
+      />
     </div>
   );
 }

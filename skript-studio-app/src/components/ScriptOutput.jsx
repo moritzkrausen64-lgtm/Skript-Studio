@@ -1,45 +1,116 @@
 import { useState } from "react";
-import { Loader2, RefreshCw, Wand2, AlertTriangle, Zap, Film, Eye, Type } from "lucide-react";
+import { Loader2, RefreshCw, Wand2, AlertTriangle, Zap, Film, Eye, Type, Pencil, Check } from "lucide-react";
 import { Rating, CopyBtn } from "./ui.jsx";
 
 const FOCUS_OPTS = ["Nur neu (Variante)", "Provokanter", "Wissenschaftlicher", "Emotionaler", "Konkreter (Beispiel)", "Einfacher erklärt"];
 const LEN_OPTS = ["Länge gleich", "Kürzer", "Länger"];
 
-function BeatRow({ b, i, onRegen }) {
-  const [focus, setFocus] = useState(FOCUS_OPTS[0]);
-  const [len, setLen] = useState(LEN_OPTS[0]);
-  const [hint, setHint] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function go() { setBusy(true); await onRegen(i, focus, len, hint); setBusy(false); }
-  const selStyle = { background: "var(--panel-2)", border: "1px solid var(--line)", color: "var(--muted)", borderRadius: 6, padding: "5px 8px", fontSize: 11, fontFamily: "Space Mono", outline: "none" };
-  const inputStyle = { ...selStyle, flex: 1, minWidth: 160, color: "var(--ink)" };
+const fieldBox = { background: "var(--panel-2)", border: "1px solid var(--line)", color: "var(--ink)", borderRadius: 6, padding: "6px 8px", fontSize: 12.5, fontFamily: "inherit", outline: "none" };
+const selStyle = { background: "var(--panel-2)", border: "1px solid var(--line)", color: "var(--muted)", borderRadius: 6, padding: "5px 8px", fontSize: 11, fontFamily: "Space Mono", outline: "none" };
+const fieldLabel = { fontFamily: "Space Mono", fontSize: 10, color: "var(--muted)", width: 60, flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.04em" };
+
+function EditToggle({ editing, onClick }) {
   return (
-    <div className="beat-row" style={{ opacity: busy ? 0.5 : 1 }}>
-      <div className="beat-tag">{b.beat}</div>
-      <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 14, margin: 0 }}>{b.text}</p>
-        {b.einblendung && <div className="meta-row" style={{ marginTop: 4 }}><b>Einblendung:</b> {b.einblendung}</div>}
-        {b.shot && <div className="meta-row"><b>Shot:</b> {b.shot}</div>}
-        <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 8 }}>
-          <select value={focus} onChange={(e) => setFocus(e.target.value)} disabled={busy} style={selStyle}>
-            {FOCUS_OPTS.map((o) => <option key={o} value={o}>{o}</option>)}
-          </select>
-          <select value={len} onChange={(e) => setLen(e.target.value)} disabled={busy} style={selStyle}>
-            {LEN_OPTS.map((o) => <option key={o} value={o}>{o}</option>)}
-          </select>
-          <input value={hint} onChange={(e) => setHint(e.target.value)} disabled={busy}
-            onKeyDown={(e) => { if (e.key === "Enter") go(); }}
-            placeholder="Fokus / Keyword (optional)…" style={inputStyle} />
-          <button className="vs-ghost" onClick={go} disabled={busy} style={{ padding: "5px 10px" }}>
-            {busy ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Abschnitt neu
-          </button>
-        </div>
+    <button className="vs-ghost" onClick={onClick} style={{ padding: "4px 10px", fontSize: 11 }}>
+      {editing ? <><Check size={12} /> Fertig</> : <><Pencil size={12} /> Bearbeiten</>}
+    </button>
+  );
+}
+
+// Ein strukturiertes Feld (Overlay/Visuell/Sound): gesperrt bis "Bearbeiten"
+function SpecField({ label, value, locked, onChange, onRegen }) {
+  const [kw, setKw] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function go() { setBusy(true); await onRegen(kw); setBusy(false); setKw(""); }
+
+  if (locked) {
+    return (
+      <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+        <span style={{ ...fieldLabel, paddingTop: 1 }}>{label}</span>
+        <span style={{ fontSize: 13, color: value ? "var(--ink)" : "var(--muted)", lineHeight: 1.45, flex: 1, minWidth: 0 }}>{value || "—"}</span>
       </div>
+    );
+  }
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: "flex-start", marginTop: 6, opacity: busy ? 0.55 : 1 }}>
+      <span style={{ ...fieldLabel, paddingTop: 8 }}>{label}</span>
+      <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} rows={1}
+        style={{ ...fieldBox, flex: 1, resize: "vertical", lineHeight: 1.4, minWidth: 0 }} />
+      <input value={kw} onChange={(e) => setKw(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") go(); }}
+        placeholder="Keyword…" disabled={busy} style={{ ...fieldBox, width: 104, flexShrink: 0, fontFamily: "Space Mono", fontSize: 11 }} />
+      <button className="vs-ghost" onClick={go} disabled={busy} title="Dieses Feld neu generieren" style={{ padding: "6px 9px", flexShrink: 0 }}>
+        {busy ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+      </button>
     </div>
   );
 }
 
-export function ScriptOutput({ s, onRegenBeat, onOptimize }) {
+// Hook-Variante: gesperrt bis "Bearbeiten"
+function HookCard({ h, i, onEdit, onRegenField }) {
+  const [editing, setEditing] = useState(false);
+  return (
+    <div style={{ borderTop: i ? "1px solid var(--line)" : "none", paddingTop: i ? 14 : 0, marginTop: i ? 14 : 8 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 2 }}>
+        <div className="mono-label" style={{ color: "var(--volt)", margin: 0 }}>Variante {i + 1} · {h.ebene}</div>
+        <EditToggle editing={editing} onClick={() => setEditing((e) => !e)} />
+      </div>
+      {editing ? (
+        <textarea value={h.gesprochen || ""} onChange={(e) => onEdit(i, "gesprochen", e.target.value)} rows={2}
+          style={{ width: "100%", background: "var(--panel-2)", border: "1px solid var(--line)", color: "var(--ink)", borderRadius: 8, padding: "8px 10px", fontSize: 15, fontWeight: 600, fontFamily: "inherit", outline: "none", resize: "vertical", margin: "5px 0 2px", lineHeight: 1.4 }} />
+      ) : (
+        <p style={{ fontSize: 16, fontWeight: 600, margin: "4px 0 6px" }}>„{h.gesprochen}"</p>
+      )}
+      <SpecField label="Overlay" value={h.overlay} locked={!editing} onChange={(v) => onEdit(i, "overlay", v)} onRegen={(kw) => onRegenField(i, "overlay", kw)} />
+      <SpecField label="Visuell" value={h.visuell} locked={!editing} onChange={(v) => onEdit(i, "visuell", v)} onRegen={(kw) => onRegenField(i, "visuell", kw)} />
+      <SpecField label="Sound" value={h.sound} locked={!editing} onChange={(v) => onEdit(i, "sound", v)} onRegen={(kw) => onRegenField(i, "sound", kw)} />
+    </div>
+  );
+}
+
+// Drehbuch-Beat: gesperrt bis "Bearbeiten"
+function BeatCard({ b, i, onEdit, onRegenField, onRegenSpoken }) {
+  const [editing, setEditing] = useState(false);
+  const [focus, setFocus] = useState(FOCUS_OPTS[0]);
+  const [len, setLen] = useState(LEN_OPTS[0]);
+  const [hint, setHint] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function goSpoken() { setBusy(true); await onRegenSpoken(i, focus, len, hint); setBusy(false); setHint(""); }
+  return (
+    <div className="beat-row" style={{ display: "block", opacity: busy ? 0.55 : 1 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+        <div className="beat-tag" style={{ display: "inline-block" }}>{b.beat}</div>
+        <EditToggle editing={editing} onClick={() => setEditing((e) => !e)} />
+      </div>
+      {editing ? (
+        <>
+          <textarea value={b.text || ""} onChange={(e) => onEdit(i, "text", e.target.value)} rows={2}
+            style={{ width: "100%", ...fieldBox, fontSize: 14, resize: "vertical", lineHeight: 1.45 }} />
+          <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 6 }}>
+            <select value={focus} onChange={(e) => setFocus(e.target.value)} disabled={busy} style={selStyle}>
+              {FOCUS_OPTS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+            <select value={len} onChange={(e) => setLen(e.target.value)} disabled={busy} style={selStyle}>
+              {LEN_OPTS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+            <input value={hint} onChange={(e) => setHint(e.target.value)} disabled={busy}
+              onKeyDown={(e) => { if (e.key === "Enter") goSpoken(); }}
+              placeholder="Fokus / Keyword (optional)…" style={{ ...selStyle, flex: 1, minWidth: 150, color: "var(--ink)" }} />
+            <button className="vs-ghost" onClick={goSpoken} disabled={busy} style={{ padding: "5px 10px" }}>
+              {busy ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Text neu
+            </button>
+          </div>
+        </>
+      ) : (
+        <p style={{ fontSize: 14, margin: 0 }}>{b.text}</p>
+      )}
+      <SpecField label="Overlay" value={b.overlay} locked={!editing} onChange={(v) => onEdit(i, "overlay", v)} onRegen={(kw) => onRegenField(i, "overlay", kw)} />
+      <SpecField label="Visuell" value={b.visuell} locked={!editing} onChange={(v) => onEdit(i, "visuell", v)} onRegen={(kw) => onRegenField(i, "visuell", kw)} />
+      <SpecField label="Sound" value={b.sound} locked={!editing} onChange={(v) => onEdit(i, "sound", v)} onRegen={(kw) => onRegenField(i, "sound", kw)} />
+    </div>
+  );
+}
+
+export function ScriptOutput({ s, onRegenBeat, onRegenBeatField, onEditBeat, onRegenHookField, onEditHook, onOptimize }) {
   const [busy, setBusy] = useState(false);
   const [ground, setGround] = useState(true);
   if (!s) return null;
@@ -94,20 +165,14 @@ export function ScriptOutput({ s, onRegenBeat, onOptimize }) {
       <div className="vs-panel" style={{ padding: 20 }}>
         <div className="section-head"><Zap size={15} /> Hook-Varianten</div>
         {(s.hooks || []).map((h, i) => (
-          <div key={i} style={{ borderTop: i ? "1px solid var(--line)" : "none", paddingTop: i ? 14 : 0, marginTop: i ? 14 : 8 }}>
-            <div className="mono-label" style={{ color: "var(--volt)" }}>Variante {i + 1} · {h.ebene}</div>
-            <p style={{ fontSize: 16, fontWeight: 600, margin: "4px 0 8px" }}>„{h.gesprochen}"</p>
-            <div className="meta-row"><b>Overlay-Text:</b> {h.overlay}</div>
-            <div className="meta-row"><b>Visuell:</b> {h.visuell}</div>
-            <div className="meta-row"><b>Sound:</b> {h.sound}</div>
-          </div>
+          <HookCard key={i} h={h} i={i} onEdit={onEditHook} onRegenField={onRegenHookField} />
         ))}
       </div>
 
       <div className="vs-panel" style={{ padding: 20 }}>
         <div className="section-head"><Film size={15} /> Drehbuch / Beats</div>
         {(s.body || []).map((b, i) => (
-          <BeatRow key={i} b={b} i={i} onRegen={onRegenBeat} />
+          <BeatCard key={i} b={b} i={i} onEdit={onEditBeat} onRegenField={onRegenBeatField} onRegenSpoken={onRegenBeat} />
         ))}
         {s.cta && <div style={{ marginTop: 12, padding: 10, background: "var(--panel-2)", borderRadius: 8, fontSize: 14 }}><b style={{ color: "var(--volt)" }}>CTA:</b> {s.cta}</div>}
       </div>
