@@ -1,0 +1,28 @@
+# Automatische Zeilenenden-Normalisierung (Windows ↔ Mac)
+* text=auto
+
+# Explizit LF für Code-Dateien
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+
+# Binärdateien — keine Konvertierung
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.docx binary
+*.pdf binary
+*.mp4 binary
+*.mov binary
+*.MOV binary
+*.webm binary

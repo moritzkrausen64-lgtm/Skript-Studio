@@ -1,0 +1,52 @@
+# ── Abhängigkeiten ────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Umgebungsvariablen & Secrets ──────────────────────────────
+.env
+.env.local
+.env.*.local
+API.txt
+
+# ── Build-Output ──────────────────────────────────────────────
+dist/
+dist-ssr/
+build/
+
+# ── Whisper-Modelle (sehr groß, ~1,5 GB) ─────────────────────
+skript-studio-app/whisper/models/
+
+# ── Video-Dateien (zu groß für Git) ──────────────────────────
+skript-studio-app/videos/*.mp4
+skript-studio-app/videos/*.mov
+skript-studio-app/videos/*.MOV
+skript-studio-app/videos/*.avi
+skript-studio-app/videos/*.mkv
+skript-studio-app/videos/*.webm
+
+# ── Lokale Daten (werden beim Start neu erzeugt) ──────────────
+skript-studio-app/data/
+
+# ── Remotion Temp-Bundles ─────────────────────────────────────
+skript-studio-app/.remotion/
+
+# ── Windows-spezifisch ───────────────────────────────────────
+*.lnk
+Thumbs.db
+Desktop.ini
+
+# ── macOS-spezifisch ─────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverrideDirectory
+
+# ── Editor / IDE ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+npm-debug.log*

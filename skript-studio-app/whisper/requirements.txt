@@ -1,0 +1,3 @@
+# Lokale Transkription. faster-whisper bringt den Audio-Decoder (PyAV inkl.
+# ffmpeg) selbst mit - es muss KEIN separates ffmpeg installiert werden.
+faster-whisper>=1.1.0

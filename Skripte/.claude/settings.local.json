@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Read(//c/Users/morit/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/35339355-aada-41c5-8fd1-0647c695bf0c/3cf4b6ca-d474-43f2-9b78-882a1f959268/skills/docx/**)",
+      "Bash(python scripts/office/unpack.py \"C:\\\\Users\\\\morit\\\\Desktop\\\\Claude\\\\Skripte\\\\VO2 MAx.docx\" unpacked/)",
+      "Bash(python -c ' *)",
+      "Read(//c/Users/morit/Desktop/Claude/skript-studio-app/**)",
+      "Bash(npm run *)",
+      "Bash(Start-Sleep -Seconds 8)",
+      "Bash(Get-Content \"C:\\\\Users\\\\morit\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-morit-Desktop-Claude-Skripte\\\\6e73cdd3-a019-464b-b0c5-d02c369ceaa2\\\\tasks\\\\bjs2vwoja.output\" -Tail 20)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 8787 | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Get-Process -Id $_ } | Select-Object ProcessName, Id)",
+      "PowerShell(Stop-Process -Id 20964 -Force 2>$null)",
+      "PowerShell(\"Process killed\")",
+      "Read(//tmp/**)",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -X POST http://localhost:8787/api/extract-file -H 'Content-Type: application/octet-stream' -H 'X-Filename: test.txt' --data 'Das ist ein Test.')",
+      "Bash(npx vite *)",
+      "Bash(npm install *)",
+      "Bash(node -e \"const p = require\\('ffmpeg-static'\\); console.log\\('path:', p\\); const fs = require\\('fs'\\); console.log\\('exists:', fs.existsSync\\(p\\)\\);\")",
+      "Bash(cat /tmp/test-alpha.webm)",
+      "Bash(node -e \"const r = require\\('@remotion/renderer'\\); console.log\\(Object.keys\\(r\\).filter\\(k => k.toLowerCase\\(\\).includes\\('back'\\) || k.toLowerCase\\(\\).includes\\('transp'\\) || k.toLowerCase\\(\\).includes\\('frame'\\)\\)\\)\")",
+      "Bash(\"C:\\\\Users\\\\morit\\\\Desktop\\\\Claude\\\\skript-studio-app\\\\node_modules\\\\ffmpeg-static\\\\ffmpeg.exe\" -i /tmp/remotion-alpha-test.webm)",
+      "Bash(curl -s http://localhost:8787/api/health)",
+      "Bash(cd \"C:\\\\Users\\\\morit\\\\Desktop\\\\Claude\\\\skript-studio-app\" && npm run dev > /tmp/app.log 2>&1 & *)",
+      "PowerShell(node --version 2>&1)",
+      "PowerShell(npm --version 2>&1)",
+      "PowerShell(python --version 2>&1)",
+      "PowerShell(uv --version 2>&1)",
+      "PowerShell(ffmpeg -version 2>&1)",
+      "PowerShell(ffprobe -version 2>&1)",
+      "PowerShell(git lfs version 2>&1)",
+      "PowerShell(yt-dlp --version 2>&1)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); uv --version; ffmpeg -version 2>&1 | Select-Object -First 1; ffprobe -version 2>&1 | Select-Object -First 1)",
+      "Bash(ls \"C:\\\\Users\\\\morit\\\\Desktop\\\\Claude\" && echo \"---\" && ls \"C:\\\\Users\\\\morit\\\\Desktop\\\\Claude\\\\skript-studio-app\")"
+    ]
+  }
+}
