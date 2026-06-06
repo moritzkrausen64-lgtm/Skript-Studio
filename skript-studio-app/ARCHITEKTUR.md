@@ -164,7 +164,18 @@ werden automatisch die Lehrbeispiele für „perfekte Einblendungen".
   (Timestamps draufsetzen) statt neu zu erfinden → Konsistenz, keine Doppelarbeit.
 
 ### Status & Verortung
-- Heute schon vorbereitet: Generator emittiert `overlay/visuell/sound` im
-  einheitlichen Schema (= der gemeinsame Vertrag, siehe Abschnitt 2).
-- Beim Merge: Engine lebt in **VideoCut** (Host, serverseitig — Hyperframes sitzt dort).
-  Der portierte Generator ruft denselben Engine auf.
+- Generator emittiert `overlay/visuell/sound` im einheitlichen Schema (= der gemeinsame Vertrag, Abschnitt 2).
+- **Weg A ist gebaut** (in VideoCut, serverseitig): `ui/api/overlay-engine.js` (pur, deterministisch —
+  Token-LCS-Alignment, `matchScriptOverlays()`), `ui/api/overlay.js` (`POST /api/overlay/match`), und
+  `compose.js` nimmt bei verlinktem `scriptId` die gematchten Overlays als **Vorgabe** (Headline =
+  Overlay-Text 1:1, Timing = Match-Fenster) statt sie neu zu erfinden. UI: Skript-Selektor im
+  Transkriptions-Modal. Verprobt: Match auf echtem Transkript sekundengenau; Compose nutzt die
+  Skript-Overlays 1:1; Render → MP4.
+- **Weg B** (Transkript → compose.js erfindet Overlays) bleibt unverändert, wenn kein Skript verlinkt ist.
+- **Lernschleife gebaut** (`ui/api/overlay-knowledge.js`): EINE trainierbare Wissensbasis = Style-Guide
+  (`docs/motion-philosophy.md`) + Few-Shot-Beispiele, gemined aus den performantesten Archiv-Videos
+  (→ deren Compositions). `compose.js` speist damit **beide** Wege (Style-Guide überall, Few-Shot in Weg B).
+  Verprobt: Composition hält jetzt die Easings/Banned-Fonts-Regeln ein. → Generator (Top-Hooks) **und**
+  Overlay-Engine (Style + Top-Overlays) lernen aus demselben Performance-Archiv.
+- **Offen:** Weg-B-HTML-Prompt lebt bewusst im Host `compose.js` (Hyperframes-spezifisch); Few-Shot-Mining
+  ist best-effort (Composition-Markup variiert); Higgsfield-Avatar (A1) noch nicht angebunden.

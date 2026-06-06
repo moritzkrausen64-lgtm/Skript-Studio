@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "videocut",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:\\Users\\morit\\Desktop\\Claude Projekt\\Claude Video Cut + Anaimation\\ui\\server.js"],
+      "port": 3001
+    }
+  ]
+}
