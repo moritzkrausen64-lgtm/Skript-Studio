@@ -29,8 +29,10 @@ src/
 
 **Entfernt** (gehörten zum Whisper/Remotion-Stack, der im Gesamtprojekt durch
 VideoCuts ElevenLabs+Hyperframes ersetzt wird): Tabs *Virale Bibliothek*,
-*Grafiken*, *Animationen*, *Schnitt*. Die Remotion-Dateien unter
-`src/remotion/` sind verwaist (nicht mehr importiert) und können später gelöscht werden.
+*Grafiken*, *Animationen*, *Schnitt*. Inzwischen vollständig gelöscht:
+`src/remotion/`, `whisper/`, `whisper-setup.bat`, die `@remotion/*`-Deps und
+alle toten Server-Routen (Server von 957 → 183 Zeilen, nur noch
+`/api/claude`, `/api/folder`, `/api/extract-file`, `/api/store/:key`, `/api/health`).
 
 ---
 
